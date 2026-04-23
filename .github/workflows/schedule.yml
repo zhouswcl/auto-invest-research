@@ -3,14 +3,14 @@ name: Auto Investment Research System
 on:
   workflow_dispatch:  # 允许手动触发
   schedule:
-    - cron: '0 0 * * *'  # 每天凌晨0点运行（可修改为你的需求，如 '0 12 * * *' 表示每天中午12点）
+    - cron: '0 0 * * *'  # 每天凌晨0点运行（可修改）
 
 jobs:
   run_system:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: write  # 允许上传 artifacts
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5  # 最新版本，支持 Node.js 24
@@ -18,27 +18,32 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5  # 最新版本，支持 Node.js 24
         with:
-          python-version: '3.11'  # 对应你的 Python 版本
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt  # 确保 requirements.txt 存在且内容正确
+          pip install -r requirements.txt
+
+      - name: Create output directories
+        run: |
+          mkdir -p data/  # 创建报告输出目录
+          mkdir -p logs/  # 创建日志目录
 
       - name: Run investment research system
         env:
-          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}  # 飞书 Webhook（需在 Secrets 中设置）
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}  # DeepSeek API Key（需在 Secrets 中设置）
-          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}  # TuShare Token（需在 Secrets 中设置）
-          RUN_MODE: ${{ secrets.RUN_MODE }}  # 运行模式（如 'daily' 或 'test'，需在 Secrets 中设置）
-        run: python main.py  # 运行主脚本
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+          RUN_MODE: ${{ secrets.RUN_MODE }}
+        run: python main.py
 
       - name: Upload reports and logs
-        if: always()  # 无论成功失败都执行
+        if: always()
         uses: actions/upload-artifact@v4  # 最新版本，支持 Node.js 24
         with:
           name: reports-${{ github.run_number }}
           path: |
-            data/  # 报告输出目录（需确保存在）
-            logs/  # 日志目录（需确保存在）
-          retention-days: 30  # 保留 30 天
+            data/
+            logs/
+          retention-days: 30
